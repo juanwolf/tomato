@@ -2,16 +2,33 @@ extern crate clap;
 extern crate pbr;
 
 use std::time::{Duration, SystemTime};
+use std::path::Path;
+use std::fs;
 use std::sync::mpsc;
 use std::thread;
 
 use clap::{App, SubCommand};
 use pbr::ProgressBar;
 
+static mut DEBUG_MODE: bool = false;
+const LOCK_PATH_STR: &str = "/tmp/tomato.lock";
+
 // start will start a new pomodoro in a new thread.
 // Quite useless as the program will wait for the thread to die to end this function. :ok_hand: 
 fn start() {
+    let lock_path = Path::new(LOCK_PATH_STR);
     println!("Starting a pomodoro");
+    unsafe {
+        if DEBUG_MODE {
+            println!("Checking if lock exists..."); 
+        }
+    }
+
+    if lock_path.exists() {
+        println!("Can't start more than one instance of tomato!");
+        return;
+    }
+    let _file = fs::File::create(lock_path);
     let starting_time = SystemTime::now();
     let refresh_rate = Duration::from_secs(5);
     let pomodoro_duration : Duration = Duration::from_secs(60 * 25);
@@ -33,6 +50,7 @@ fn start() {
                     sender.send(elapsed.as_secs()).unwrap();
                     if elapsed > pomodoro_duration {
                         done = true;
+                        let _res = fs::remove_file(LOCK_PATH_STR);
                     };
                 }
                 Err(_elapsed) => {
@@ -55,9 +73,16 @@ fn main() {
         .version("0.1.0")
         .author("Jean-Loup Adde <spam@juanwolf.fr>")
         .about("Integrated Pomodoro Timer")
+        .args_from_usage("-d, --debug 'Turn debugging information on'")
         .subcommand(SubCommand::with_name("start")
         .about("Starts a pomodoro timer"))
         .get_matches();
+
+    if matches.is_present("debug") {
+        unsafe {
+            DEBUG_MODE = true;
+        }
+    }
 
     if let Some(_matches) = matches.subcommand_matches("start") {
        start();
