@@ -7,20 +7,23 @@ use std::fs;
 use std::sync::mpsc;
 use std::thread;
 
-use clap::{App, SubCommand};
+use clap::{App, Arg, SubCommand};
 use pbr::ProgressBar;
 
 static mut DEBUG_MODE: bool = false;
 const LOCK_PATH_STR: &str = "/tmp/tomato.lock";
 
 // start will start a new pomodoro in a new thread.
-// Quite useless as the program will wait for the thread to die to end this function. :ok_hand: 
-fn start() {
+// Quite useless as the program will wait for the thread to die to end this function. :ok_hand:
+fn start(message: Option<&str>) {
     let lock_path = Path::new(LOCK_PATH_STR);
-    println!("Starting a pomodoro");
+    match message {
+        Some(message) => println!("Starting a pomodoro for {}", message),
+        None => println!("Starting a pomodoro")
+    }
     unsafe {
         if DEBUG_MODE {
-            println!("Checking if lock exists..."); 
+            println!("Checking if lock exists...");
         }
     }
 
@@ -73,9 +76,21 @@ fn main() {
         .version("0.1.0")
         .author("Jean-Loup Adde <spam@juanwolf.fr>")
         .about("Integrated Pomodoro Timer")
-        .args_from_usage("-d, --debug 'Turn debugging information on'")
-        .subcommand(SubCommand::with_name("start")
-        .about("Starts a pomodoro timer"))
+        .arg(Arg::with_name("DEBUG")
+             .short("-d")
+             .long("--debug")
+             .help("Turn debugging information on"))
+        .subcommand(
+            SubCommand::with_name("start")
+                .about("Starts a pomodoro timer")
+                .arg(Arg::with_name("message")
+                     .short("m")
+                     .long("message")
+                     .value_name("YourMessage")
+                     .help("Add a message to this pomodoro")
+                     .takes_value(true)
+                )
+        )
         .get_matches();
 
     if matches.is_present("debug") {
@@ -84,7 +99,8 @@ fn main() {
         }
     }
 
-    if let Some(_matches) = matches.subcommand_matches("start") {
-       start();
+    if let Some(matches) = matches.subcommand_matches("start") {
+        let message: Option<&str> = matches.value_of("message");
+        start(message);
     }
 }
