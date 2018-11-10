@@ -11,10 +11,6 @@ jobs:
           key: project-cache
 
       - run:
-          name: Install Dependencies
-          command: cargo install rustfmt
-            
-      - run:
           name: Check Formatting
           command: |
             rustfmt --version
