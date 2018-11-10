@@ -1,11 +1,11 @@
 extern crate clap;
 extern crate pbr;
 
-use std::time::{Duration, SystemTime};
-use std::path::Path;
 use std::fs;
+use std::path::Path;
 use std::sync::mpsc;
 use std::thread;
+use std::time::{Duration, SystemTime};
 
 use clap::{App, Arg, SubCommand};
 use pbr::ProgressBar;
@@ -19,7 +19,7 @@ fn start(message: Option<&str>) {
     let lock_path = Path::new(LOCK_PATH_STR);
     match message {
         Some(message) => println!("Starting a pomodoro for {}", message),
-        None => println!("Starting a pomodoro")
+        None => println!("Starting a pomodoro"),
     }
     unsafe {
         if DEBUG_MODE {
@@ -34,13 +34,17 @@ fn start(message: Option<&str>) {
     let _file = fs::File::create(lock_path);
     let starting_time = SystemTime::now();
     let refresh_rate = Duration::from_secs(5);
-    let pomodoro_duration : Duration = Duration::from_secs(60 * 25);
+    let pomodoro_duration: Duration = Duration::from_secs(60 * 25);
 
-    let mut pb = ProgressBar::new(pomodoro_duration.as_secs().wrapping_div(refresh_rate.as_secs()));
-    pb.show_speed     = false;
+    let mut pb = ProgressBar::new(
+        pomodoro_duration
+            .as_secs()
+            .wrapping_div(refresh_rate.as_secs()),
+    );
+    pb.show_speed = false;
     pb.show_time_left = true;
-    pb.show_counter   = false;
-    pb.show_percent   = false;
+    pb.show_counter = false;
+    pb.show_percent = false;
     // TODO: if a pomodoro is already started, send warning message and ask to stop it first.
     // TODO: if not, create a new thread with a timer of 25min like a ticker or something
     let (sender, receiver): (mpsc::Sender<u64>, mpsc::Receiver<u64>) = mpsc::channel();
@@ -76,22 +80,23 @@ fn main() {
         .version("0.1.0")
         .author("Jean-Loup Adde <spam@juanwolf.fr>")
         .about("Integrated Pomodoro Timer")
-        .arg(Arg::with_name("DEBUG")
-             .short("-d")
-             .long("--debug")
-             .help("Turn debugging information on"))
-        .subcommand(
+        .arg(
+            Arg::with_name("DEBUG")
+                .short("-d")
+                .long("--debug")
+                .help("Turn debugging information on"),
+        ).subcommand(
             SubCommand::with_name("start")
                 .about("Starts a pomodoro timer")
-                .arg(Arg::with_name("message")
-                     .short("m")
-                     .long("message")
-                     .value_name("YourMessage")
-                     .help("Add a message to this pomodoro")
-                     .takes_value(true)
-                )
-        )
-        .get_matches();
+                .arg(
+                    Arg::with_name("message")
+                        .short("m")
+                        .long("message")
+                        .value_name("YourMessage")
+                        .help("Add a message to this pomodoro")
+                        .takes_value(true),
+                ),
+        ).get_matches();
 
     if matches.is_present("debug") {
         unsafe {
