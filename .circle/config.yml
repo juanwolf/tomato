@@ -12,19 +12,17 @@ jobs:
 
       - run:
           name: Install Dependencies
-          command:
-            cargo install rustfmt
+          command: cargo install rustfmt
             
       - run:
           name: Check Formatting
-          command:
+          command: |
             rustfmt --version
             cargo fmt -- --write-mode=diff
 
       - run:
           name: Build
-          command:
-            cargo build
+          command: cargo build
 
       - save_cache:
           key: project-cache
