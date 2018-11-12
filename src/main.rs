@@ -15,9 +15,9 @@ const LOCK_PATH_STR: &str = "/tmp/tomato.lock";
 
 // start will start a new pomodoro in a new thread.
 // Quite useless as the program will wait for the thread to die to end this function. :ok_hand:
-fn start<T: output::Output>(message: Option<&str>, mut my_output: T) {
+fn start<T: output::Output>(message: Option<&str>, mut output: T) {
     let lock_path = Path::new(LOCK_PATH_STR);
-    my_output.start_handler(message);
+    output.start_handler(message);
     unsafe {
         if DEBUG_MODE {
             println!("Checking if lock exists...");
@@ -59,7 +59,7 @@ fn start<T: output::Output>(message: Option<&str>, mut my_output: T) {
 
     while time_spent < pomodoro_duration.as_secs() {
         time_spent = receiver.recv().unwrap();
-        my_output.refresh(None);
+        output.refresh(None);
     }
 }
 
@@ -93,7 +93,7 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("start") {
         let message: Option<&str> = matches.value_of("message");
-        let stdout_output = output::Stdout{
+        let stdout_output = output::stdout::Stdout{
             refresh_rate: Duration::from_secs(5),
             pomodoro_duration: Duration::from_secs(60 * 25),
             pb: None,
