@@ -1,5 +1,4 @@
 extern crate clap;
-extern crate pbr;
 
 use std::fs;
 use std::path::Path;
@@ -8,19 +7,17 @@ use std::thread;
 use std::time::{Duration, SystemTime};
 
 use clap::{App, Arg, SubCommand};
-use pbr::ProgressBar;
+
+mod output;
 
 static mut DEBUG_MODE: bool = false;
 const LOCK_PATH_STR: &str = "/tmp/tomato.lock";
 
 // start will start a new pomodoro in a new thread.
 // Quite useless as the program will wait for the thread to die to end this function. :ok_hand:
-fn start(message: Option<&str>) {
+fn start<T: output::Output>(message: Option<&str>, mut output: T) {
     let lock_path = Path::new(LOCK_PATH_STR);
-    match message {
-        Some(message) => println!("Starting a pomodoro for {}", message),
-        None => println!("Starting a pomodoro"),
-    }
+    output.start_handler(message);
     unsafe {
         if DEBUG_MODE {
             println!("Checking if lock exists...");
@@ -36,15 +33,6 @@ fn start(message: Option<&str>) {
     let refresh_rate = Duration::from_secs(5);
     let pomodoro_duration: Duration = Duration::from_secs(60 * 25);
 
-    let mut pb = ProgressBar::new(
-        pomodoro_duration
-            .as_secs()
-            .wrapping_div(refresh_rate.as_secs()),
-    );
-    pb.show_speed = false;
-    pb.show_time_left = true;
-    pb.show_counter = false;
-    pb.show_percent = false;
     // TODO: if a pomodoro is already started, send warning message and ask to stop it first.
     // TODO: if not, create a new thread with a timer of 25min like a ticker or something
     let (sender, receiver): (mpsc::Sender<u64>, mpsc::Receiver<u64>) = mpsc::channel();
@@ -71,7 +59,7 @@ fn start(message: Option<&str>) {
 
     while time_spent < pomodoro_duration.as_secs() {
         time_spent = receiver.recv().unwrap();
-        pb.inc();
+        output.refresh(None);
     }
 }
 
@@ -106,6 +94,11 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("start") {
         let message: Option<&str> = matches.value_of("message");
-        start(message);
+        let stdout_output = output::stdout::Stdout {
+            refresh_rate: Duration::from_secs(5),
+            pomodoro_duration: Duration::from_secs(60 * 25),
+            pb: None,
+        };
+        start(message, stdout_output);
     }
 }
