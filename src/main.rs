@@ -94,7 +94,7 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("start") {
         let message: Option<&str> = matches.value_of("message");
-        let stdout_output = output::stdout::Stdout{
+        let stdout_output = output::stdout::Stdout {
             refresh_rate: Duration::from_secs(5),
             pomodoro_duration: Duration::from_secs(60 * 25),
             pb: None,

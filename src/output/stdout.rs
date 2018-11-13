@@ -16,20 +16,22 @@ pub struct Stdout {
 impl Output for Stdout {
     fn start_handler(&mut self, message: Option<&str>) {
         self.pb = Some(ProgressBar::new(
-            self.pomodoro_duration.as_secs().wrapping_div(self.refresh_rate.as_secs())
+            self.pomodoro_duration
+                .as_secs()
+                .wrapping_div(self.refresh_rate.as_secs()),
         ));
         match self.pb {
             Some(ref mut pb) => {
-                pb.show_speed     = false;
+                pb.show_speed = false;
                 pb.show_time_left = true;
-                pb.show_counter   = false;
-                pb.show_percent   = false;
+                pb.show_counter = false;
+                pb.show_percent = false;
             }
             None => {}
         }
         match message {
             Some(message) => println!("Starting a Pomodoro for {}", message),
-            None => println!("Starting a pomodoro")
+            None => println!("Starting a pomodoro"),
         }
     }
 
@@ -37,8 +39,8 @@ impl Output for Stdout {
         match self.pb {
             Some(ref mut pb) => {
                 let _res = pb.inc();
-            },
-            None => println!("Tried to refresh stdout handler but no pb instantiated!!!")
+            }
+            None => println!("Tried to refresh stdout handler but no pb instantiated!!!"),
         }
     }
 
