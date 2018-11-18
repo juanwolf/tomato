@@ -1,28 +1,24 @@
 extern crate clap;
 
-use std::fs;
+use std::{fs, thread};
 use std::path::Path;
 use std::sync::mpsc;
-use std::thread;
 use std::time::{Duration, SystemTime};
 
 use clap::{App, Arg, SubCommand};
 
 mod output;
 
-static mut DEBUG_MODE: bool = false;
+use output::Output;
+use output::stdout::Stdout;
+
 const LOCK_PATH_STR: &str = "/tmp/tomato.lock";
 
 // start will start a new pomodoro in a new thread.
 // Quite useless as the program will wait for the thread to die to end this function. :ok_hand:
-fn start<T: output::Output>(message: Option<&str>, mut output: T) {
+fn start<T: Output>(message: Option<&str>, mut output: T) {
     let lock_path = Path::new(LOCK_PATH_STR);
     output.start_handler(message);
-    unsafe {
-        if DEBUG_MODE {
-            println!("Checking if lock exists...");
-        }
-    }
 
     if lock_path.exists() {
         println!("Can't start more than one instance of tomato!");
@@ -69,10 +65,11 @@ fn main() {
         .author("Jean-Loup Adde <spam@juanwolf.fr>")
         .about("Integrated Pomodoro Timer")
         .arg(
-            Arg::with_name("DEBUG")
-                .short("-d")
-                .long("--debug")
-                .help("Turn debugging information on"),
+            Arg::with_name("output")
+                .short("-o")
+                .long("--output")
+                .value_name("output")
+                .help("Specific output. Current values possible: stdout"),
         ).subcommand(
             SubCommand::with_name("start")
                 .about("Starts a pomodoro timer")
@@ -86,19 +83,15 @@ fn main() {
                 ),
         ).get_matches();
 
-    if matches.is_present("debug") {
-        unsafe {
-            DEBUG_MODE = true;
-        }
-    }
+    let output_value = matches.value_of("output").unwrap_or("stdout");
+
+    let output = match output_value {
+        "stdout" => Stdout::new(Duration::from_secs(5), Duration::from_secs(60 * 25)),
+        unknown_output => panic!("Unknown output type '{}'. Feel free to contribute if you're missing it out!", unknown_output),
+    };
 
     if let Some(matches) = matches.subcommand_matches("start") {
         let message: Option<&str> = matches.value_of("message");
-        let stdout_output = output::stdout::Stdout {
-            refresh_rate: Duration::from_secs(5),
-            pomodoro_duration: Duration::from_secs(60 * 25),
-            pb: None,
-        };
-        start(message, stdout_output);
+        start(message, output);
     }
 }

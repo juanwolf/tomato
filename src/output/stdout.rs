@@ -10,10 +10,19 @@ use super::Output;
 pub struct Stdout {
     pub refresh_rate: Duration,
     pub pomodoro_duration: Duration,
-    pub pb: Option<ProgressBar<io::Stdout>>,
+    pb: Option<ProgressBar<io::Stdout>>,
 }
 
 impl Output for Stdout {
+
+    fn new(refresh_rate: Duration, pomodoro_duration: Duration) -> Stdout {
+        return Stdout {
+            refresh_rate: refresh_rate,
+            pomodoro_duration: pomodoro_duration,
+            pb: None,
+        }
+    }
+
     fn start_handler(&mut self, message: Option<&str>) {
         self.pb = Some(ProgressBar::new(
             self.pomodoro_duration
