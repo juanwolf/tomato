@@ -14,13 +14,12 @@ pub struct Stdout {
 }
 
 impl Output for Stdout {
-
     fn new(refresh_rate: Duration, pomodoro_duration: Duration) -> Stdout {
         return Stdout {
             refresh_rate: refresh_rate,
             pomodoro_duration: pomodoro_duration,
             pb: None,
-        }
+        };
     }
 
     fn start_handler(&mut self, message: Option<&str>) {

@@ -1,16 +1,16 @@
 extern crate clap;
 
-use std::{fs, thread};
 use std::path::Path;
 use std::sync::mpsc;
 use std::time::{Duration, SystemTime};
+use std::{fs, thread};
 
 use clap::{App, Arg, SubCommand};
 
 mod output;
 
-use output::Output;
 use output::stdout::Stdout;
+use output::Output;
 
 const LOCK_PATH_STR: &str = "/tmp/tomato.lock";
 
@@ -87,7 +87,10 @@ fn main() {
 
     let output = match output_value {
         "stdout" => Stdout::new(Duration::from_secs(5), Duration::from_secs(60 * 25)),
-        unknown_output => panic!("Unknown output type '{}'. Feel free to contribute if you're missing it out!", unknown_output),
+        unknown_output => panic!(
+            "Unknown output type '{}'. Feel free to contribute if you're missing it out!",
+            unknown_output
+        ),
     };
 
     if let Some(matches) = matches.subcommand_matches("start") {
