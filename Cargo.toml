@@ -6,3 +6,5 @@ authors = ["Jean-Loup Adde <jean-loup.adde@juanwolf.fr>"]
 [dependencies]
 clap = "2.6.0"
 pbr  = "1.0.1"
+config = "0.9.1"
+dirs = "1.0.4"
