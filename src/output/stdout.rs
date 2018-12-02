@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use self::pbr::ProgressBar;
 
-use super::Output;
+use super::PomodoroHandler;
 
 pub struct Stdout {
     pub refresh_rate: Duration,
@@ -13,8 +13,8 @@ pub struct Stdout {
     pb: Option<ProgressBar<io::Stdout>>,
 }
 
-impl Output for Stdout {
-    fn new(refresh_rate: Duration, pomodoro_duration: Duration) -> Stdout {
+impl PomodoroHandler for Stdout {
+    fn new(_output: &str, refresh_rate: Duration, pomodoro_duration: Duration) -> Stdout {
         return Stdout {
             refresh_rate: refresh_rate,
             pomodoro_duration: pomodoro_duration,
@@ -43,7 +43,7 @@ impl Output for Stdout {
         }
     }
 
-    fn refresh(&mut self, _remaining_time: Option<Duration>) {
+    fn refresh(&mut self, _remaining_time: Option<super::Duration>) {
         match self.pb {
             Some(ref mut pb) => {
                 let _res = pb.inc();

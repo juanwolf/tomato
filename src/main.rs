@@ -9,14 +9,13 @@ use clap::{App, Arg, SubCommand};
 
 mod output;
 
-use output::stdout::Stdout;
-use output::Output;
+use output::{PomodoroHandler, Output};
 
 const LOCK_PATH_STR: &str = "/tmp/tomato.lock";
 
 // start will start a new pomodoro in a new thread.
 // Quite useless as the program will wait for the thread to die to end this function. :ok_hand:
-fn start<T: Output>(message: Option<&str>, mut output: T) {
+fn start(message: Option<&str>, mut output: Box<Output>) {
     let lock_path = Path::new(LOCK_PATH_STR);
     output.start_handler(message);
 
@@ -55,8 +54,14 @@ fn start<T: Output>(message: Option<&str>, mut output: T) {
 
     while time_spent < pomodoro_duration.as_secs() {
         time_spent = receiver.recv().unwrap();
-        output.refresh(None);
+        let duration_spent = pomodoro_duration - Duration::from_secs(time_spent);
+
+        output.refresh(Some(duration_spent));
     }
+}
+
+fn get_output(output: &str) -> Box<Output> {
+    return Box::new(Output::new(output, Duration::from_secs(5), Duration::from_secs(60 * 25)))
 }
 
 fn main() {
@@ -85,13 +90,7 @@ fn main() {
 
     let output_value = matches.value_of("output").unwrap_or("stdout");
 
-    let output = match output_value {
-        "stdout" => Stdout::new(Duration::from_secs(5), Duration::from_secs(60 * 25)),
-        unknown_output => panic!(
-            "Unknown output type '{}'. Feel free to contribute if you're missing it out!",
-            unknown_output
-        ),
-    };
+    let output = get_output(output_value);
 
     if let Some(matches) = matches.subcommand_matches("start") {
         let message: Option<&str> = matches.value_of("message");
