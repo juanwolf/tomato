@@ -1,10 +1,10 @@
 extern crate dirs;
 
-use std::time::Duration;
+use super::{format_duration, PomodoroHandler};
 use std::fs::{remove_file, File as StdFile, OpenOptions};
-use std::path;
 use std::io::prelude::*;
-use super::{PomodoroHandler, format_duration};
+use std::path;
+use std::time::Duration;
 
 pub struct File {
     pub refresh_rate: Duration,
@@ -28,7 +28,7 @@ impl File {
             Err(_) => match StdFile::create(path) {
                 Ok(f) => f,
                 Err(e) => panic!("Could not create file: {}. Error: {}", path.display(), e),
-            }
+            },
         };
         return file;
     }
@@ -37,7 +37,7 @@ impl File {
         let path: &path::PathBuf = &self.file_path;
         match remove_file(path) {
             Err(e) => panic!("Could not delete file {}: {}", self.file_path.display(), e),
-            Ok(_) => {},
+            Ok(_) => {}
         }
     }
 }
@@ -55,13 +55,12 @@ impl PomodoroHandler for File {
     }
 
     fn start_handler(&mut self, _message: Option<&str>) {
-        let mut file = self.get_file(); 
+        let mut file = self.get_file();
         match file.write_all(format_duration(self.pomodoro_duration).as_bytes()) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(e) => panic!("Could not write to file. Error: {}", e),
         }
     }
-
 
     fn refresh(&mut self, remaining_time: Option<Duration>) {
         let mut file = self.get_file();
@@ -69,9 +68,9 @@ impl PomodoroHandler for File {
             Some(remaining_time) => {
                 match file.write_all(format_duration(remaining_time).as_bytes()) {
                     Err(e) => panic!("Could not write to the file. Error: {}", e),
-                    Ok(_) => {},
+                    Ok(_) => {}
                 };
-            },
+            }
             None => println!("No remaining time!"),
         }
     }

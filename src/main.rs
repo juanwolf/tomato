@@ -9,7 +9,7 @@ use clap::{App, Arg, SubCommand};
 
 mod output;
 
-use output::{PomodoroHandler, Output};
+use output::{Output, PomodoroHandler};
 
 const LOCK_PATH_STR: &str = "/tmp/tomato.lock";
 
@@ -61,7 +61,11 @@ fn start(message: Option<&str>, mut output: Box<Output>) {
 }
 
 fn get_output(output: &str) -> Box<Output> {
-    return Box::new(Output::new(output, Duration::from_secs(5), Duration::from_secs(60 * 25)))
+    return Box::new(Output::new(
+        output,
+        Duration::from_secs(5),
+        Duration::from_secs(60 * 25),
+    ));
 }
 
 fn main() {

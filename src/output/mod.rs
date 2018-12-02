@@ -2,7 +2,7 @@ use std::time::Duration;
 
 fn format_duration(duration: Duration) -> String {
     let secs = duration.as_secs();
-    return format!("{:02}:{:02}", secs / 60, secs % 60)
+    return format!("{:02}:{:02}", secs / 60, secs % 60);
 }
 
 // An output is a representation of an external resource to store your
@@ -14,23 +14,21 @@ pub trait PomodoroHandler {
     fn refresh(&mut self, remaining_time: Option<Duration>);
 }
 
-pub mod stdout;
 pub mod file;
+pub mod stdout;
 
 pub enum Output {
     Stdout(stdout::Stdout),
     File(file::File),
 }
 
-impl PomodoroHandler for Output  {
+impl PomodoroHandler for Output {
     fn new(output: &str, refresh_rate: Duration, pomodoro_duration: Duration) -> Self {
         match output {
-            "file" => return Output::File(
-                file::File::new("", refresh_rate, pomodoro_duration)
-            ),
-            "stdout" => return Output::Stdout(
-                stdout::Stdout::new("", refresh_rate, pomodoro_duration)
-            ),
+            "file" => return Output::File(file::File::new("", refresh_rate, pomodoro_duration)),
+            "stdout" => {
+                return Output::Stdout(stdout::Stdout::new("", refresh_rate, pomodoro_duration))
+            }
             unknown_output => panic!(
                 "Unknown output type '{}'. Feel free to contribute if you're missing it out!",
                 unknown_output
