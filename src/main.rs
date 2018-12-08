@@ -15,7 +15,7 @@ const LOCK_PATH_STR: &str = "/tmp/tomato.lock";
 
 // start will start a new pomodoro in a new thread.
 // Quite useless as the program will wait for the thread to die to end this function. :ok_hand:
-fn start(message: Option<&str>, mut output: Box<Output>) {
+fn start(mut output: Box<Output>, pomodoro_duration: Duration, refresh_rate: Duration, message: Option<&str>) {
     let lock_path = Path::new(LOCK_PATH_STR);
     output.start_handler(message);
 
@@ -25,9 +25,6 @@ fn start(message: Option<&str>, mut output: Box<Output>) {
     }
     let _file = fs::File::create(lock_path);
     let starting_time = SystemTime::now();
-    let refresh_rate = Duration::from_secs(5);
-    let pomodoro_duration: Duration = Duration::from_secs(60 * 25);
-
     // TODO: if a pomodoro is already started, send warning message and ask to stop it first.
     // TODO: if not, create a new thread with a timer of 25min like a ticker or something
     let (sender, receiver): (mpsc::Sender<u64>, mpsc::Receiver<u64>) = mpsc::channel();
@@ -49,22 +46,21 @@ fn start(message: Option<&str>, mut output: Box<Output>) {
             }
         }
     });
-
-    let mut time_spent = 0;
-
-    while time_spent < pomodoro_duration.as_secs() {
-        time_spent = receiver.recv().unwrap();
-        let duration_spent = pomodoro_duration - Duration::from_secs(time_spent);
-
-        output.refresh(Some(duration_spent));
-    }
+//    thread::spawn(move || {
+        let mut time_spent = 0;
+        while time_spent < pomodoro_duration.as_secs() {
+            time_spent = receiver.recv().unwrap();
+            let duration_spent = pomodoro_duration - Duration::from_secs(time_spent);
+            output.refresh(Some(duration_spent));
+        }
+ //   });
 }
 
-fn get_output(output: &str) -> Box<Output> {
+fn get_output(output: &str, pomodoro_duration: Duration, refresh_rate: Duration) -> Box<Output> {
     return Box::new(Output::new(
         output,
-        Duration::from_secs(5),
-        Duration::from_secs(60 * 25),
+        refresh_rate,
+        pomodoro_duration,
     ));
 }
 
@@ -79,7 +75,22 @@ fn main() {
                 .long("--output")
                 .value_name("output")
                 .help("Specific output. Current values possible: stdout"),
-        ).subcommand(
+        )
+        .arg(
+            Arg::with_name("pomodoro_duration")
+                .short("-d")
+                .long("--pomodoro_duration")
+                .value_name("pomodoro_duration")
+                .help("Duration of the pomodoro in seconds. Default: 1500 (25min)"),
+        )
+        .arg(
+            Arg::with_name("refresh_rate")
+                .short("-r")
+                .long("refresh_rate")
+                .value_name("refresh_rate")
+                .help("The refresh rate of the output in seconds. Default: 5")
+        )
+        .subcommand(
             SubCommand::with_name("start")
                 .about("Starts a pomodoro timer")
                 .arg(
@@ -93,11 +104,15 @@ fn main() {
         ).get_matches();
 
     let output_value = matches.value_of("output").unwrap_or("stdout");
+    let pomodoro_duration_input: u64 = matches.value_of("pomodoro_duration").unwrap_or("1500").parse().unwrap();
+    let refresh_rate_input: u64 = matches.value_of("refresh_rate").unwrap_or("5").parse().unwrap();
+    let pomodoro_duration = Duration::from_secs(pomodoro_duration_input);
+    let refresh_rate = Duration::from_secs(refresh_rate_input);
 
-    let output = get_output(output_value);
+    let output = get_output(output_value, pomodoro_duration, refresh_rate);
 
     if let Some(matches) = matches.subcommand_matches("start") {
         let message: Option<&str> = matches.value_of("message");
-        start(message, output);
+        start(output, pomodoro_duration, refresh_rate, message);
     }
 }
