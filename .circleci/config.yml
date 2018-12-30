@@ -21,6 +21,10 @@ jobs:
             cargo fmt -- --check
 
       - run:
+          name: Run Tests
+          command: cargo test
+
+      - run:
           name: Build
           command: cargo build
 
