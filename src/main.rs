@@ -2,7 +2,6 @@
 extern crate serde_derive;
 extern crate clap;
 
-
 use std::path::Path;
 use std::sync::mpsc;
 use std::time::{Duration, SystemTime};
@@ -82,7 +81,7 @@ fn main() {
                 .short("-c")
                 .long("--config")
                 .value_name("config")
-                .help("Config file to use. Default: ~/.tomato.toml")
+                .help("Config file to use. Default: ~/.tomato.toml"),
         )
         .arg(
             Arg::with_name("output")
@@ -90,19 +89,22 @@ fn main() {
                 .long("--output")
                 .value_name("output")
                 .help("Specific output. Current values possible: stdout"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("pomodoro_duration")
                 .short("-d")
                 .long("--pomodoro_duration")
                 .value_name("pomodoro_duration")
                 .help("Duration of the pomodoro in seconds. Default: 1500 (25min)"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("refresh_rate")
                 .short("-r")
                 .long("refresh_rate")
                 .value_name("refresh_rate")
                 .help("The refresh rate of the output in seconds. Default: 5"),
-        ).subcommand(
+        )
+        .subcommand(
             SubCommand::with_name("start")
                 .about("Starts a pomodoro timer")
                 .arg(
@@ -113,7 +115,8 @@ fn main() {
                         .help("Add a message to this pomodoro")
                         .takes_value(true),
                 ),
-        ).get_matches();
+        )
+        .get_matches();
 
     let output_value = matches.value_of("output").unwrap_or("stdout");
     let pomodoro_duration_input: u64 = matches

@@ -39,16 +39,16 @@ pub struct OutputConfig {
 const DEFAULT_CONFIG_FILE: &str = ".tomato.toml";
 
 impl From<ConfigFromFile> for Config {
-    fn from(config : ConfigFromFile) -> Self {
+    fn from(config: ConfigFromFile) -> Self {
         let default_config: Config = get_default_config();
         let mut output_to_use = default_config.output_to_use;
         let refresh_rate: Duration = match config.refresh_rate {
             Some(refresh_rate) => Duration::from_secs(refresh_rate),
-            None => default_config.refresh_rate
+            None => default_config.refresh_rate,
         };
         let pomodoro_duration: Duration = match config.pomodoro_duration {
             Some(pomodoro_duration) => Duration::from_secs(pomodoro_duration),
-            None => default_config.pomodoro_duration
+            None => default_config.pomodoro_duration,
         };
 
         let outputs: OutputConfig = match config.outputs {
@@ -57,28 +57,25 @@ impl From<ConfigFromFile> for Config {
                     Some(stdout_config) => {
                         output_to_use = String::from("stdout");
                         stdout_config
-
-                    },
+                    }
                     None => default_config.outputs.stdout,
                 };
                 let file_config = match outputs.file {
                     Some(file_config) => {
                         output_to_use = String::from("file");
                         file_config
-                    },
+                    }
                     None => default_config.outputs.file,
                 };
-                OutputConfig{
+                OutputConfig {
                     stdout: stdout_config,
                     file: file_config,
                 }
-            },
-            None => {
-                default_config.outputs
             }
+            None => default_config.outputs,
         };
 
-        return Config{
+        return Config {
             refresh_rate: refresh_rate,
             pomodoro_duration: pomodoro_duration,
             output_to_use: output_to_use,
@@ -99,7 +96,7 @@ pub fn get_default_config() -> Config {
             stdout: StdoutConfig {
                 show_percent: false,
             },
-            file: FileConfig{
+            file: FileConfig {
                 path: default_tomato_file,
             },
         },
@@ -107,9 +104,8 @@ pub fn get_default_config() -> Config {
 }
 
 pub fn get_config(config_path: Option<PathBuf>) -> Config {
-    let home_dir = env::var("HOME").unwrap_or_else(|_| {
-        panic!("HOME environment variable not found.")
-    });
+    let home_dir =
+        env::var("HOME").unwrap_or_else(|_| panic!("HOME environment variable not found."));
     let default_config_file_path = Path::new(&home_dir).join(DEFAULT_CONFIG_FILE);
     let config_file_path = config_path.unwrap_or(default_config_file_path);
 
@@ -141,7 +137,10 @@ mod tests {
         assert_eq!(config.pomodoro_duration, default_config.pomodoro_duration);
         assert_eq!(config.output_to_use, default_config.output_to_use);
         assert_eq!(config.outputs.file.path, default_config.outputs.file.path);
-        assert_eq!(config.outputs.stdout.show_percent, default_config.outputs.stdout.show_percent);
+        assert_eq!(
+            config.outputs.stdout.show_percent,
+            default_config.outputs.stdout.show_percent
+        );
     }
 
     #[test]
@@ -170,6 +169,5 @@ mod tests {
         assert_eq!(config.pomodoro_duration, default_config.pomodoro_duration);
         assert_eq!(config.output_to_use, "file");
         assert_eq!(config.outputs.file.path, "~/.tomato")
-
     }
 }
