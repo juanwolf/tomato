@@ -1,5 +1,7 @@
 use std::time::Duration;
 
+use super::config;
+
 fn format_duration(duration: Duration) -> String {
     let secs = duration.as_secs();
     return format!("{:02}:{:02}", secs / 60, secs % 60);
@@ -8,7 +10,7 @@ fn format_duration(duration: Duration) -> String {
 // An output is a representation of an external resource to store your
 // pomodoros. They can be ephemeral or persistant.
 pub trait PomodoroHandler {
-    fn new(output: &str, refresh_rate: Duration, pomodoro_duration: Duration) -> Self;
+    fn new(output: &str, config: config::Config) -> Self;
     fn start_handler(&mut self, message: Option<&str>);
     fn end_handler(&mut self);
     fn refresh(&mut self, remaining_time: Option<Duration>);
@@ -23,12 +25,10 @@ pub enum Output {
 }
 
 impl PomodoroHandler for Output {
-    fn new(output: &str, refresh_rate: Duration, pomodoro_duration: Duration) -> Self {
+    fn new(output: &str, config: config::Config) -> Self {
         match output {
-            "file" => return Output::File(file::File::new("", refresh_rate, pomodoro_duration)),
-            "stdout" => {
-                return Output::Stdout(stdout::Stdout::new("", refresh_rate, pomodoro_duration))
-            }
+            "file" => return Output::File(file::File::new("", config)),
+            "stdout" => return Output::Stdout(stdout::Stdout::new("", config)),
             unknown_output => panic!(
                 "Unknown output type '{}'. Feel free to contribute if you're missing it out!",
                 unknown_output

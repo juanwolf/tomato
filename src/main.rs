@@ -1,4 +1,7 @@
+#[macro_use]
+extern crate serde_derive;
 extern crate clap;
+
 
 use std::path::Path;
 use std::sync::mpsc;
@@ -10,6 +13,10 @@ use clap::{App, Arg, SubCommand};
 mod output;
 
 use output::{Output, PomodoroHandler};
+
+mod config;
+
+use config::Config;
 
 const LOCK_PATH_STR: &str = "/tmp/tomato.lock";
 
@@ -61,8 +68,8 @@ fn start(
     //   });
 }
 
-fn get_output(output: &str, pomodoro_duration: Duration, refresh_rate: Duration) -> Box<Output> {
-    return Box::new(Output::new(output, refresh_rate, pomodoro_duration));
+fn get_output(output: &str, config: Config) -> Box<Output> {
+    return Box::new(Output::new(output, config));
 }
 
 fn main() {
@@ -71,27 +78,31 @@ fn main() {
         .author("Jean-Loup Adde <spam@juanwolf.fr>")
         .about("Integrated Pomodoro Timer")
         .arg(
+            Arg::with_name("config")
+                .short("-c")
+                .long("--config")
+                .value_name("config")
+                .help("Config file to use. Default: ~/.tomato.toml")
+        )
+        .arg(
             Arg::with_name("output")
                 .short("-o")
                 .long("--output")
                 .value_name("output")
                 .help("Specific output. Current values possible: stdout"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("pomodoro_duration")
                 .short("-d")
                 .long("--pomodoro_duration")
                 .value_name("pomodoro_duration")
                 .help("Duration of the pomodoro in seconds. Default: 1500 (25min)"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("refresh_rate")
                 .short("-r")
                 .long("refresh_rate")
                 .value_name("refresh_rate")
                 .help("The refresh rate of the output in seconds. Default: 5"),
-        )
-        .subcommand(
+        ).subcommand(
             SubCommand::with_name("start")
                 .about("Starts a pomodoro timer")
                 .arg(
@@ -102,8 +113,7 @@ fn main() {
                         .help("Add a message to this pomodoro")
                         .takes_value(true),
                 ),
-        )
-        .get_matches();
+        ).get_matches();
 
     let output_value = matches.value_of("output").unwrap_or("stdout");
     let pomodoro_duration_input: u64 = matches
@@ -119,7 +129,9 @@ fn main() {
     let pomodoro_duration = Duration::from_secs(pomodoro_duration_input);
     let refresh_rate = Duration::from_secs(refresh_rate_input);
 
-    let output = get_output(output_value, pomodoro_duration, refresh_rate);
+    let config: Config = config::get_config(None);
+
+    let output = get_output(output_value, config);
 
     if let Some(matches) = matches.subcommand_matches("start") {
         let message: Option<&str> = matches.value_of("message");
