@@ -108,16 +108,22 @@ pub fn get_config(config_path: Option<PathBuf>) -> Config {
         env::var("HOME").unwrap_or_else(|_| panic!("HOME environment variable not found."));
     let default_config_file_path = Path::new(&home_dir).join(DEFAULT_CONFIG_FILE);
     let config_file_path = config_path.unwrap_or(default_config_file_path);
+    let default_config = get_default_config();
 
-    let mut f = File::open(config_file_path).expect("file not found");
+    let f = File::open(config_file_path);
 
-    let mut contents = String::new();
-    f.read_to_string(&mut contents)
-        .expect("something went wrong reading the file");
+    match f {
+        Ok(mut f) => {
+            let mut contents = String::new();
+            f.read_to_string(&mut contents)
+                .expect("something went wrong reading the file");
 
-    println!("With text:\n{}", contents);
+            println!("With text:\n{}", contents);
 
-    return parse_config(&contents);
+            return parse_config(&contents);
+        }
+        Err(_) => default_config,
+    }
 }
 
 fn parse_config(config: &str) -> Config {

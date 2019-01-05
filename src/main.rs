@@ -2,7 +2,7 @@
 extern crate serde_derive;
 extern crate clap;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 use std::time::{Duration, SystemTime};
 use std::{fs, thread};
@@ -119,20 +119,16 @@ fn main() {
         .get_matches();
 
     let output_value = matches.value_of("output").unwrap_or("stdout");
-    let pomodoro_duration_input: u64 = matches
-        .value_of("pomodoro_duration")
-        .unwrap_or("1500")
-        .parse()
-        .unwrap();
-    let refresh_rate_input: u64 = matches
-        .value_of("refresh_rate")
-        .unwrap_or("5")
-        .parse()
-        .unwrap();
-    let pomodoro_duration = Duration::from_secs(pomodoro_duration_input);
-    let refresh_rate = Duration::from_secs(refresh_rate_input);
 
-    let config: Config = config::get_config(None);
+    let config_path: Option<PathBuf> = match matches.value_of("config") {
+        Some(cp) => Some(PathBuf::from(cp)),
+        None => None,
+    };
+
+    let config: Config = config::get_config(config_path);
+
+    let pomodoro_duration = config.pomodoro_duration;
+    let refresh_rate = config.refresh_rate;
 
     let output = get_output(output_value, config);
 
