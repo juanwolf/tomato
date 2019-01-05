@@ -1,39 +1,40 @@
 extern crate pbr;
+extern crate serde_derive;
 
 use std::io;
-use std::time::Duration;
 
 use self::pbr::ProgressBar;
 
 use super::PomodoroHandler;
 
+use super::config;
+
 pub struct Stdout {
-    pub refresh_rate: Duration,
-    pub pomodoro_duration: Duration,
+    pub config: config::Config,
     pb: Option<ProgressBar<io::Stdout>>,
 }
 
 impl PomodoroHandler for Stdout {
-    fn new(_output: &str, refresh_rate: Duration, pomodoro_duration: Duration) -> Stdout {
+    fn new(_output: &str, config: config::Config) -> Stdout {
         return Stdout {
-            refresh_rate: refresh_rate,
-            pomodoro_duration: pomodoro_duration,
+            config: config,
             pb: None,
         };
     }
 
     fn start_handler(&mut self, message: Option<&str>) {
         self.pb = Some(ProgressBar::new(
-            self.pomodoro_duration
+            self.config
+                .pomodoro_duration
                 .as_secs()
-                .wrapping_div(self.refresh_rate.as_secs()),
+                .wrapping_div(self.config.refresh_rate.as_secs()),
         ));
         match self.pb {
             Some(ref mut pb) => {
                 pb.show_speed = false;
                 pb.show_time_left = true;
                 pb.show_counter = false;
-                pb.show_percent = false;
+                pb.show_percent = self.config.outputs.stdout.show_percent;
             }
             None => {}
         }
@@ -55,4 +56,9 @@ impl PomodoroHandler for Stdout {
     fn end_handler(&mut self) {
         println!("Nice one! You diserve a break.");
     }
+}
+
+#[derive(Deserialize, Clone)]
+pub struct Config {
+    pub show_percent: bool,
 }

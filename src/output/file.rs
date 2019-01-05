@@ -1,4 +1,5 @@
 extern crate dirs;
+extern crate serde_derive;
 
 use super::{format_duration, PomodoroHandler};
 use std::fs::{remove_file, File as StdFile, OpenOptions};
@@ -6,10 +7,10 @@ use std::io::prelude::*;
 use std::path;
 use std::time::Duration;
 
+use super::config;
+
 pub struct File {
-    pub refresh_rate: Duration,
-    pub pomodoro_duration: Duration,
-    file_path: path::PathBuf,
+    pub config: config::Config,
 }
 
 fn get_home_dir() -> path::PathBuf {
@@ -21,7 +22,7 @@ fn get_home_dir() -> path::PathBuf {
 
 impl File {
     fn get_file(&mut self) -> StdFile {
-        let path: &path::PathBuf = &self.file_path;
+        let path: &path::PathBuf = &path::PathBuf::from(&self.config.outputs.file.path);
         let file = match OpenOptions::new().write(true).open(path) {
             Ok(f) => f,
             // We create the file in case it does not exist.
@@ -34,29 +35,22 @@ impl File {
     }
 
     fn remove_file(&mut self) {
-        let path: &path::PathBuf = &self.file_path;
+        let path: &path::PathBuf = &path::PathBuf::from(&self.config.outputs.file.path);
         match remove_file(path) {
-            Err(e) => panic!("Could not delete file {}: {}", self.file_path.display(), e),
+            Err(e) => panic!("Could not delete file {}: {}", path.display(), e),
             Ok(_) => {}
         }
     }
 }
 
 impl PomodoroHandler for File {
-    fn new(_output: &str, refresh_rate: super::Duration, pomodoro_duration: Duration) -> File {
-        let home_dir = get_home_dir();
-        let file_path = home_dir.join(".tomato");
-
-        return File {
-            pomodoro_duration: pomodoro_duration,
-            refresh_rate: refresh_rate,
-            file_path: file_path,
-        };
+    fn new(_output: &str, config: config::Config) -> File {
+        return File { config: config };
     }
 
     fn start_handler(&mut self, _message: Option<&str>) {
         let mut file = self.get_file();
-        match file.write_all(format_duration(self.pomodoro_duration).as_bytes()) {
+        match file.write_all(format_duration(self.config.pomodoro_duration).as_bytes()) {
             Ok(_) => {}
             Err(e) => panic!("Could not write to file. Error: {}", e),
         }
@@ -78,4 +72,8 @@ impl PomodoroHandler for File {
     fn end_handler(&mut self) {
         self.remove_file();
     }
+}
+#[derive(Deserialize, Clone)]
+pub struct Config {
+    pub path: String,
 }
