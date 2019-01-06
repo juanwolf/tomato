@@ -4,6 +4,7 @@ extern crate serde_derive;
 use super::{format_duration, PomodoroHandler};
 use std::fs::{remove_file, File as StdFile, OpenOptions};
 use std::io::prelude::*;
+use std::io::ErrorKind::NotFound;
 use std::path;
 use std::time::Duration;
 
@@ -13,7 +14,7 @@ pub struct File {
     pub config: config::Config,
 }
 
-fn get_home_dir() -> path::PathBuf {
+fn _get_home_dir() -> path::PathBuf {
     match dirs::home_dir() {
         Some(path) => path,
         None => panic!("Could not define your home directory..."),
@@ -26,10 +27,11 @@ impl File {
         let file = match OpenOptions::new().write(true).open(path) {
             Ok(f) => f,
             // We create the file in case it does not exist.
-            Err(_) => match StdFile::create(path) {
+            Err(ref err) if err.kind() == NotFound => match StdFile::create(path) {
                 Ok(f) => f,
-                Err(e) => panic!("Could not create file: {}. Error: {}", path.display(), e),
+                Err(e) => panic!("Could not create file: '{}'. Error: {}", path.display(), e),
             },
+            Err(err) => panic!("Uncatched error happened in the file module: {}", err),
         };
         return file;
     }

@@ -27,14 +27,7 @@ fn start(
     refresh_rate: Duration,
     message: Option<&str>,
 ) {
-    let lock_path = Path::new(LOCK_PATH_STR);
     output.start_handler(message);
-
-    if lock_path.exists() {
-        println!("Can't start more than one instance of tomato!");
-        return;
-    }
-    let _file = fs::File::create(lock_path);
     let starting_time = SystemTime::now();
     // TODO: if a pomodoro is already started, send warning message and ask to stop it first.
     // TODO: if not, create a new thread with a timer of 25min like a ticker or something
@@ -48,8 +41,7 @@ fn start(
                     sender.send(elapsed.as_secs()).unwrap();
                     if elapsed > pomodoro_duration {
                         done = true;
-                        let _res = fs::remove_file(LOCK_PATH_STR);
-                    };
+                    }
                 }
                 Err(_elapsed) => {
                     panic!();
@@ -67,8 +59,14 @@ fn start(
     //   });
 }
 
-fn get_output(output: &str, config: Config) -> Box<Output> {
-    return Box::new(Output::new(output, config));
+fn get_outputs(config: Config) -> Vec<Box<Output>> {
+    let mut outputs: Vec<Box<Output>> = Vec::with_capacity(config.outputs_to_use.len());
+    let local_config = config.clone();
+    for output_string in local_config.outputs_to_use {
+        let c = config.clone();
+        outputs.push(Box::new(Output::new(&output_string, c)))
+    }
+    return outputs;
 }
 
 fn main() {
@@ -82,27 +80,6 @@ fn main() {
                 .long("--config")
                 .value_name("config")
                 .help("Config file to use. Default: ~/.tomato.toml"),
-        )
-        .arg(
-            Arg::with_name("output")
-                .short("-o")
-                .long("--output")
-                .value_name("output")
-                .help("Specific output. Current values possible: stdout"),
-        )
-        .arg(
-            Arg::with_name("pomodoro_duration")
-                .short("-d")
-                .long("--pomodoro_duration")
-                .value_name("pomodoro_duration")
-                .help("Duration of the pomodoro in seconds. Default: 1500 (25min)"),
-        )
-        .arg(
-            Arg::with_name("refresh_rate")
-                .short("-r")
-                .long("refresh_rate")
-                .value_name("refresh_rate")
-                .help("The refresh rate of the output in seconds. Default: 5"),
         )
         .subcommand(
             SubCommand::with_name("start")
@@ -118,8 +95,6 @@ fn main() {
         )
         .get_matches();
 
-    let output_value = matches.value_of("output").unwrap_or("stdout");
-
     let config_path: Option<PathBuf> = match matches.value_of("config") {
         Some(cp) => Some(PathBuf::from(cp)),
         None => None,
@@ -130,10 +105,31 @@ fn main() {
     let pomodoro_duration = config.pomodoro_duration;
     let refresh_rate = config.refresh_rate;
 
-    let output = get_output(output_value, config);
+    let outputs = get_outputs(config);
 
     if let Some(matches) = matches.subcommand_matches("start") {
-        let message: Option<&str> = matches.value_of("message");
-        start(output, pomodoro_duration, refresh_rate, message);
+        let lock_path = Path::new(LOCK_PATH_STR);
+        if lock_path.exists() {
+            println!("Can't start more than one instance of tomato!");
+            return;
+        }
+        let _file = fs::File::create(lock_path);
+        let mut handles = vec![];
+        for output in outputs {
+            let local_matches = matches.clone();
+
+            let handle = thread::spawn(move || {
+                let message: Option<&str> = local_matches.value_of("message");
+                start(output, pomodoro_duration, refresh_rate, message);
+            });
+
+            handles.push(handle);
+        }
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+
+        let _res = fs::remove_file(LOCK_PATH_STR);
     }
 }
