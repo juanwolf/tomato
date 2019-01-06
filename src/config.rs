@@ -23,13 +23,15 @@ struct OutputConfigFromFile {
     pub file: Option<FileConfig>,
 }
 
+#[derive(Clone)]
 pub struct Config {
     pub refresh_rate: Duration,
     pub pomodoro_duration: Duration,
-    pub output_to_use: String,
+    pub outputs_to_use: Vec<String>,
     pub outputs: OutputConfig,
 }
 
+#[derive(Clone)]
 pub struct OutputConfig {
     pub stdout: StdoutConfig,
     pub file: FileConfig,
@@ -41,7 +43,7 @@ const DEFAULT_CONFIG_FILE: &str = ".tomato.toml";
 impl From<ConfigFromFile> for Config {
     fn from(config: ConfigFromFile) -> Self {
         let default_config: Config = get_default_config();
-        let mut output_to_use = default_config.output_to_use;
+        let mut outputs_to_use = Vec::new();
         let refresh_rate: Duration = match config.refresh_rate {
             Some(refresh_rate) => Duration::from_secs(refresh_rate),
             None => default_config.refresh_rate,
@@ -55,14 +57,14 @@ impl From<ConfigFromFile> for Config {
             Some(outputs) => {
                 let stdout_config = match outputs.stdout {
                     Some(stdout_config) => {
-                        output_to_use = String::from("stdout");
+                        outputs_to_use.push(String::from("stdout"));
                         stdout_config
                     }
                     None => default_config.outputs.stdout,
                 };
                 let file_config = match outputs.file {
                     Some(file_config) => {
-                        output_to_use = String::from("file");
+                        outputs_to_use.push(String::from("file"));
                         file_config
                     }
                     None => default_config.outputs.file,
@@ -72,13 +74,16 @@ impl From<ConfigFromFile> for Config {
                     file: file_config,
                 }
             }
-            None => default_config.outputs,
+            None => {
+                outputs_to_use = default_config.outputs_to_use;
+                default_config.outputs
+            }
         };
 
         return Config {
             refresh_rate: refresh_rate,
             pomodoro_duration: pomodoro_duration,
-            output_to_use: output_to_use,
+            outputs_to_use: outputs_to_use,
             outputs: outputs,
         };
     }
@@ -86,12 +91,13 @@ impl From<ConfigFromFile> for Config {
 
 pub fn get_default_config() -> Config {
     let default_tomato_file = String::from("./.tomato");
-    let default_output = String::from("stdout");
+    let mut outputs_to_use = Vec::new();
+    outputs_to_use.push(String::from("stdout"));
 
     return Config {
         refresh_rate: Duration::from_secs(2),
         pomodoro_duration: Duration::from_secs(1500),
-        output_to_use: default_output,
+        outputs_to_use: outputs_to_use,
         outputs: OutputConfig {
             stdout: StdoutConfig {
                 show_percent: false,
@@ -118,8 +124,6 @@ pub fn get_config(config_path: Option<PathBuf>) -> Config {
             f.read_to_string(&mut contents)
                 .expect("something went wrong reading the file");
 
-            println!("With text:\n{}", contents);
-
             return parse_config(&contents);
         }
         Err(_) => default_config,
@@ -135,13 +139,13 @@ fn parse_config(config: &str) -> Config {
 mod tests {
     use super::*;
     #[test]
-    fn test_empty_config_file_returns_empty_config_file() {
+    fn test_empty_config_file_returns_default_config_file() {
         let config = parse_config("");
         let default_config = get_default_config();
 
         assert_eq!(config.refresh_rate, default_config.refresh_rate);
         assert_eq!(config.pomodoro_duration, default_config.pomodoro_duration);
-        assert_eq!(config.output_to_use, default_config.output_to_use);
+        assert_eq!(config.outputs_to_use, default_config.outputs_to_use);
         assert_eq!(config.outputs.file.path, default_config.outputs.file.path);
         assert_eq!(
             config.outputs.stdout.show_percent,
@@ -158,7 +162,7 @@ mod tests {
         let config = parse_config(config_str);
 
         assert_eq!(config.refresh_rate.as_secs(), 1);
-        assert_eq!(config.output_to_use, String::from("stdout"));
+        assert_eq!(config.outputs_to_use[0], String::from("stdout"));
     }
 
     #[test]
@@ -173,7 +177,29 @@ mod tests {
 
         assert_eq!(config.refresh_rate, default_config.refresh_rate);
         assert_eq!(config.pomodoro_duration, default_config.pomodoro_duration);
-        assert_eq!(config.output_to_use, "file");
+        assert_eq!(config.outputs_to_use[0], "file");
+        assert_eq!(config.outputs.file.path, "~/.tomato")
+    }
+
+    #[test]
+    fn test_config_file_with_multiple_outputs() {
+        let config_str = r#"
+            [outputs]
+              [outputs.file]
+                path = "~/.tomato"
+
+              [outputs.stdout]
+                show_percent = false
+        "#;
+        let config = parse_config(config_str);
+        let default_config = get_default_config();
+        println!("{:?}", config.outputs_to_use);
+
+        assert_eq!(config.refresh_rate, default_config.refresh_rate);
+        assert_eq!(config.pomodoro_duration, default_config.pomodoro_duration);
+        assert!(config.outputs_to_use.contains(&String::from("file")));
+        assert!(config.outputs_to_use.contains(&String::from("stdout")));
+
         assert_eq!(config.outputs.file.path, "~/.tomato")
     }
 }

@@ -20,7 +20,7 @@ Tomato uses TOML as configuration language. The `~/.tomato.toml` file will be lo
 
 ### Format
 
-Every single output/module as its own section. At the minute tomato can only deal with one output at a time. Here's the default configuration file:
+Every single output/module as its own section. Here's the default configuration file:
 
 ```
 pomodoro_duration = 1500 # Default pomodoro duration in seconds
@@ -31,10 +31,10 @@ refresh_rate = 2 # Default refresh_rate of the outputs in seconds
   show_percent = false # Display the percentage achieved of this pomodoro
 
   [outputs.file]
-  path = "$HOME/.tomato" # The path to store the time left of the pomodoro in a file. (Useful for tmux)
+  path = "/home/my_user/.tomato" # The path to store the time left of the pomodoro in a file. (Useful for tmux)
 ```
 
-The output sections are optionnal. As only one output can be used by tomato at the minute, you'll need only one output configuration section. Choose well between stdout or file! (Others will come and multi outputs support as well!)
+Multiple outputs can be used at the same time. To activate an output, you just need to define the specific output section and it will be activated at the next use.
 
 ## Planning
 
