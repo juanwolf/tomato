@@ -22,7 +22,7 @@ Tomato uses TOML as configuration language. The `~/.tomato.toml` file will be lo
 
 Every single output/module as its own section. Here's the default configuration file:
 
-```
+```toml
 pomodoro_duration = 1500 # Default pomodoro duration in seconds
 refresh_rate = 2 # Default refresh_rate of the outputs in seconds
 
@@ -38,7 +38,7 @@ Multiple outputs can be used at the same time. To activate an output, you just n
 
 ## Planning
 
-I'll try to keep everything on one place: https://github.com/juanwolf/tomato/projects
+I'll try to keep everything on track using this [trello board](https://trello.com/b/96CII7pt/%F0%9F%8D%85-tomato)
 
 ## Contributions
 
