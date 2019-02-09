@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Jean-Loup Adde <jean-loup.adde@juanwolf.fr>"]
 
 [dependencies]
-clap = "2.6.0"
+clap = "2.32.0"
 pbr  = "1.0.1"
 toml = "0.4.10"
 dirs = "1.0.4"

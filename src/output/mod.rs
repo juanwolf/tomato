@@ -19,6 +19,7 @@ pub trait PomodoroHandler {
 pub mod file;
 pub mod stdout;
 
+#[derive(Clone)]
 pub enum Output {
     Stdout(stdout::Stdout),
     File(file::File),

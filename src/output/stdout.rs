@@ -58,6 +58,12 @@ impl PomodoroHandler for Stdout {
     }
 }
 
+impl Clone for Stdout {
+    fn clone(&self) -> Stdout {
+        return Stdout::new("", self.config.clone());
+    }
+}
+
 #[derive(Deserialize, Clone)]
 pub struct Config {
     pub show_percent: bool,

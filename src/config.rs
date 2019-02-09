@@ -14,6 +14,8 @@ use output::stdout::Config as StdoutConfig;
 struct ConfigFromFile {
     pub refresh_rate: Option<u64>,
     pub pomodoro_duration: Option<u64>,
+    pub break_duration: Option<u64>,
+    pub long_break_duration: Option<u64>,
     pub outputs: Option<OutputConfigFromFile>,
 }
 
@@ -27,6 +29,8 @@ struct OutputConfigFromFile {
 pub struct Config {
     pub refresh_rate: Duration,
     pub pomodoro_duration: Duration,
+    pub break_duration: Duration,
+    pub long_break_duration: Duration,
     pub outputs_to_use: Vec<String>,
     pub outputs: OutputConfig,
 }
@@ -51,6 +55,14 @@ impl From<ConfigFromFile> for Config {
         let pomodoro_duration: Duration = match config.pomodoro_duration {
             Some(pomodoro_duration) => Duration::from_secs(pomodoro_duration),
             None => default_config.pomodoro_duration,
+        };
+        let break_duration: Duration = match config.break_duration {
+            Some(break_duration) => Duration::from_secs(break_duration),
+            None => default_config.break_duration,
+        };
+        let long_break_duration: Duration = match config.long_break_duration {
+            Some(long_break_duration) => Duration::from_secs(long_break_duration),
+            None => default_config.long_break_duration,
         };
 
         let outputs: OutputConfig = match config.outputs {
@@ -83,6 +95,8 @@ impl From<ConfigFromFile> for Config {
         return Config {
             refresh_rate: refresh_rate,
             pomodoro_duration: pomodoro_duration,
+            break_duration: break_duration,
+            long_break_duration: long_break_duration,
             outputs_to_use: outputs_to_use,
             outputs: outputs,
         };
@@ -97,6 +111,8 @@ pub fn get_default_config() -> Config {
     return Config {
         refresh_rate: Duration::from_secs(2),
         pomodoro_duration: Duration::from_secs(1500),
+        break_duration: Duration::from_secs(5 * 60),
+        long_break_duration: Duration::from_secs(15 * 60),
         outputs_to_use: outputs_to_use,
         outputs: OutputConfig {
             stdout: StdoutConfig {
@@ -161,7 +177,7 @@ mod tests {
         "#;
         let config = parse_config(config_str);
 
-        assert_eq!(config.refresh_rate.as_secs(), 1);
+        assert_eq!(config.pomodoro_duration.as_secs(), 1);
         assert_eq!(config.outputs_to_use[0], String::from("stdout"));
     }
 

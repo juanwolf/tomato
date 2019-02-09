@@ -10,6 +10,7 @@ use std::time::Duration;
 
 use super::config;
 
+#[derive(Clone)]
 pub struct File {
     pub config: config::Config,
 }
